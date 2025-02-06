@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input id="username" type="text" placeholder="Username" required>
+            <input id="password" type="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="signup.html">Signup here</a></p>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#login-form').submit(function(event) {
+                event.preventDefault(); // Prevent form from reloading the page
+
+                let username = $('#username').val().trim();
+                let password = $('#password').val().trim();
+
+                if (!username || !password) {
+                    alert("Username and password are required!");
+                    return;
+                }
+
+                $.ajax({
+                    url: 'http://localhost:3000/auth/login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ username, password }),
+                    success: function(response) {
+                        localStorage.setItem('user', JSON.stringify(response.user));
+                        alert("Login successful!");
+                        window.location.href = 'chat.html';
+                    },
+                    error: function(xhr) {
+                        alert("Login Failed: " + (xhr.responseJSON?.error || "Invalid credentials"));
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

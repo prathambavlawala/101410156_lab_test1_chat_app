@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Signup</h2>
+        <input id="username" type="text" placeholder="Username" required>
+        <input id="firstname" type="text" placeholder="First Name" required>
+        <input id="lastname" type="text" placeholder="Last Name" required>
+        <input id="password" type="password" placeholder="Password" required>
+        <button onclick="signup()">Signup</button>
+        <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+
+    <script>
+        function signup() {
+            let username = $('#username').val().trim();
+            let firstname = $('#firstname').val().trim();
+            let lastname = $('#lastname').val().trim();
+            let password = $('#password').val().trim();
+
+            if (!username || !firstname || !lastname || !password) {
+                alert("All fields are required!");
+                return;
+            }
+
+            $.ajax({
+                url: '/auth/signup',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, firstname, lastname, password }),
+                success: function(response) {
+                    alert(response.message);
+                    window.location.href = 'login.html';
+                },
+                error: function(xhr) {
+                    alert("Signup Failed: " + (xhr.responseJSON?.error || "Unknown Error"));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

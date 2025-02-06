@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Chat Room</h2>
+        
+        <label for="room">Choose a Room:</label>
+        <select id="room">
+            <option value="devops">DevOps</option>
+            <option value="cloud_computing">Cloud Computing</option>
+            <option value="covid19">COVID-19</option>
+            <option value="sports">Sports</option>
+            <option value="nodejs">NodeJS</option>
+        </select>
+        <button id="join-btn">Join</button>
+        <button id="leave-btn" disabled>Leave</button>
+        
+        <!-- Messages Section -->
+        <div id="messages-container">
+            <div id="messages"></div>
+            <p id="typing-indicator"></p>
+        </div>
+        
+        <!-- Message Input Form -->
+        <form id="chat-form">
+            <input id="message" type="text" placeholder="Type a message... (Use /bot to chat with the bot)" required autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+
+        <!-- Logout Button -->
+        <button id="logout-btn">Logout</button>
+    </div>
+
+    <script>
+       const socket = io();
+let room = '';
+
+$(document).ready(function() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // ✅ Join Room with Username
+    $('#join-btn').click(function() {
+        room = $('#room').val();
+        socket.emit('joinRoom', { room, username: user.username });
+        $('#messages').empty();
+        $('#leave-btn').prop('disabled', false);
+    });
+
+    // ✅ Leave Room
+    $('#leave-btn').click(function() {
+        socket.emit('leaveRoom', room);
+        room = '';
+        $('#messages').empty();
+        $('#leave-btn').prop('disabled', true);
+    });
+
+    // ✅ Send Message
+    $('#chat-form').submit(function(event) {
+        event.preventDefault();
+        const message = $('#message').val().trim();
+        if (room && message) {
+            socket.emit('chatMessage', { room, message, from_user: user.username });
+            $('#message').val('');
+            socket.emit('stopTyping', room); // Stop typing when message is sent
+        }
+    });
+
+    // ✅ Fix Typing Indicator
+    let typingTimer;
+    $('#message').on('input', () => {
+        console.log("✅ Typing event sent to server"); // Debug log
+        socket.emit('typing', { room, username: user.username });
+
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            console.log("⏳ Stop Typing event sent to server"); // Debug log
+            socket.emit('stopTyping', room);
+        }, 2000);
+    });
+
+    // ✅ Show Typing Indicator
+    socket.on('typing', ({ username }) => {
+        console.log("💡 Typing event received from server:", username); // Debug log
+        $('#typing-indicator').html(`<strong>${username} is typing...</strong>`).show();
+    });
+
+    // ✅ Hide Typing Indicator
+    socket.on('stopTyping', () => {
+        console.log("🛑 Stop Typing event received from server"); // Debug log
+        $('#typing-indicator').html('').hide();
+    });
+
+    // ✅ Receive Message
+    socket.on('message', (msg) => {
+        $('#messages').append(`<p><strong>${msg.from_user}:</strong> ${msg.message}</p>`);
+        $('#messages-container').scrollTop($('#messages-container')[0].scrollHeight);
+    });
+
+    // ✅ Logout
+    $('#logout-btn').click(function() {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    });
+});
+
+    </script>
+    
+
+    
+</body>
+</html>
